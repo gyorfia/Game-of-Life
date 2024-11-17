@@ -1,19 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "Board.h"
+#include <stdbool.h>
 #include <assert.h>
 
 // Creates a static instance of the Board struct
 static struct Board
 {
-	size_t M; // # of logical rows
-	size_t N; // # of logical columns
+	size_t height; // # of logical rows
+	size_t width; // # of logical columns
 	int generation;
 	char* data;
 	char* next_data;
 } board;
 
-// Functions for "internal" use
+// FUNCTIONS FOR "INTERNAL" USE
 
 // DESCRIPTION:
 // Used by the UpdateBoard function which needs to access the board with padding
@@ -21,6 +22,12 @@ static struct Board
 // Returns the character at [@row][@column] of the board with the padding row and column
 // Allows extended indexing from -1 to M, -1 to N
 char GetExt(int row, int column);
+
+// DESCRIPTION:
+// Used for setting the initial state
+// INPUT/OUTPUT:
+// Sets the character at [@row][@column] of the board data without the padding row and column
+void Start_Set(int row, int column, char value);
 
 //
 
@@ -30,85 +37,127 @@ void FreeBoard()
 	free(board.next_data);
 }
 
-int NewBoard(char* errorString)
+int NewBoardFromState(char* errorString)
+{
+	return NewBoard(errorString, -1, -1);
+}
+
+int NewBoard(char* errorString, int height, int width)
 {
 	FreeBoard(); // we only need to deallocate board data when quitting
 	board.generation = 0;
 
-	// Open state.txt
-	FILE* state = fopen("SAVES//state.txt", "r");
+	if (height == -1 && width == -1)
+	{
+		// Open state.txt
+		FILE* state = fopen("SAVES//state.txt", "r");
+		if (!state)
+		{
+			sprintf_s(errorString, 256, "Error opening state.txt!");
+			return 1;
+		}
+
+		// Load board from the file
+		if (fscanf_s(state, "HEIGHT=%llu\nWIDTH=%llu\n", &board.height, &board.width) != 2)
+		{
+			sprintf_s(errorString, 256, "Error reading height or width from state.txt!");
+			return 1;
+		}
+
+		// Allocate memory for the board(s), and initialize it with 0-s
+		board.data = (char*)calloc((Get_Height() + 2) * (Get_Width() + 2), sizeof(char));
+		board.next_data = (char*)calloc((Get_Height() + 2) * (Get_Width() + 2), sizeof(char));
+		if (!board.data || !board.next_data)
+		{
+			sprintf_s(errorString, 256, "Memory allocation failed!");
+			return 1;
+		}
+
+		//// Initialize the board with 0-s
+		//const size_t trueSize = (Get_Height() + 2) * (Get_Width() + 2);
+		//for (size_t i = 0; i < trueSize; i++)
+		//{
+		//	board.next_data[i] = board.data[i] = 0;
+		//}
+
+		// Load live cells from the file
+		char readChar;
+		int cellCounter = 0;
+		int numberOfCells = (int)(Get_Height() * Get_Width());
+		// the last argument of fscanf_s is the number of characters to read
+		while (fscanf_s(state, "%c", &readChar, 1) == 1 && cellCounter != numberOfCells)
+		{
+			if (readChar == '0' || readChar == '1')
+			{
+				const size_t row = cellCounter / Get_Width();
+				const size_t column = cellCounter % Get_Width();
+				Start_Set(row, column, readChar - '0');
+				cellCounter++;
+			}
+		}
+		// Check whether we have read enough cells
+		if (cellCounter != numberOfCells)
+		{
+			sprintf_s(errorString, 256, "Only read %d cells out of the %d expected!", cellCounter, numberOfCells);
+			return 1;
+		}
+
+		// Close the file, and return 0 if everything went well
+		fclose(state);
+	}
+	else
+	{
+		board.height = height;
+		board.width = width;
+		board.data = (char*)calloc((Get_Height() + 2) * (Get_Width() + 2), sizeof(char));
+		board.next_data = (char*)calloc((Get_Height() + 2) * (Get_Width() + 2), sizeof(char));
+		if (!board.data || !board.next_data)
+		{
+			sprintf_s(errorString, 256, "Memory allocation failed!");
+			return 1;
+		}
+	}
+	
+
+	return 0;
+}
+
+int SetState(char* errorString)
+{
+	int height = Get_Height();
+	int width = Get_Width();
+	// Rewrite the content of state.txt with the new state in the appropriate format
+	FILE* state = fopen("SAVES//state.txt", "w");
 	if (!state)
 	{
 		sprintf_s(errorString, 256, "Error opening state.txt!");
 		return 1;
 	}
-
-	// Load board from the file
-	if (fscanf_s(state, "HEIGHT=%llu\nWIDTH=%llu\n", &board.M, &board.N) != 2)
-	{
-		sprintf_s(errorString, 256, "Error reading height or width from state.txt!");
-		return 1;
-	}
-
-	// Allocate memory for the board(s)
-	board.data = (char*)malloc((Get_M()+2) * (Get_N()+2) * sizeof(char));
-	if (!board.data)
-	{
-		sprintf_s(errorString, 256, "Memory allocation failed!");
-		return 1;
-	}
-	board.next_data = (char*)malloc((Get_M()+2) * (Get_N()+2) * sizeof(char));
-	if (!board.data)
-	{
-		sprintf_s(errorString, 256, "Memory allocation failed!");
-		return 1;
-	}
-
-	// Initialize the board with 0-s
-	const size_t trueSize = (Get_M() + 2) * (Get_N() + 2);
-	for (size_t i = 0; i < trueSize; i++)
-	{
-		board.next_data[i] = board.data[i] = 0;
-	}
-
-	// Load live cells from the file
-	char readChar;
-	int cellCounter = 0;
-	int numberOfCells = (int)(Get_M() * Get_N());
-	// the last argument of fscanf_s is the number of characters to read
-	while (fscanf_s(state, "%c", &readChar, 1) == 1 && cellCounter != numberOfCells)
-	{
-		if (readChar == '0' || readChar == '1')
-		{
-			const size_t row = cellCounter / Get_N();
-			const size_t column = cellCounter % Get_N();
-			Start_Set(row, column, readChar - '0');
-			cellCounter++;
-		}
-	}
-	// Check whether we have read enough cells
-	if (cellCounter != numberOfCells)
-	{
-		sprintf_s(errorString, 256, "Only read %d cells out of the %d expected!", cellCounter, numberOfCells);
-		return 1;
-	}
-
-	// Draw borders (only needed when we initialize a new board)
-	for (size_t j = 0; j < Get_N() + 2; j++)
-		printf("#");
-	printf("\n");
-	for (size_t i = 0; i < Get_M(); i++)
-	{
-		printf("#");
-		for (size_t j = 0; j < Get_N(); j++)
-			printf(" ");
-		printf("#\n");
-	}
-	for (size_t j = 0; j < Get_N() + 2; j++)
-		printf("#");
-
-	// Close the file, and return 0 if everything went well
-	fclose(state);
+    fprintf(state, "HEIGHT=%d\nWIDTH=%d\n", height, width);
+    // Print top border
+    for (int j = 0; j < width + 2; j++)
+    {
+    fprintf(state, "#");
+    }
+    fprintf(state, "\n");
+    for (int i = 0; i < height; i++)
+    {
+    // Print left border
+    fprintf(state, "#");
+    for (int j = 0; j < width; j++)
+    {
+    fprintf(state, "%d", Get(i, j));
+    }
+    // Print right border
+    fprintf(state, "#\n");
+    }
+    // Print bottom border
+    for (int j = 0; j < width + 2; j++)
+    {
+    fprintf(state, "#");
+    }
+    fprintf(state, "\n");
+    fclose(state);
 	return 0;
 }
 
@@ -126,9 +175,9 @@ int LoadState(char* filename, char* errorString)
 void UpdateBoard()
 {
 	board.generation++;
-	for (int i = 0; i < Get_M(); i++) // row
+	for (int i = 0; i < Get_Height(); i++) // row
 	{
-		for (int j = 0; j < Get_N(); j++) // column
+		for (int j = 0; j < Get_Width(); j++) // column
 		{
 			char currentCell = Get(i, j);
 			int neighbourSum = -currentCell; // this way the current element cancels out, since we add it in the 3x3 loop
@@ -172,40 +221,39 @@ void UpdateBoard()
 char GetExt(int row, int column)
 {
 	assert(board.data);
-	assert(row >= -1 && row <= (int)Get_M() && column >= -1 && column <= (int)Get_N());
-	return board.data[(row + 1) * (board.N + 2) + column + 1];
+	assert(row >= -1 && row <= (int)Get_Height() && column >= -1 && column <= (int)Get_Width());
+	return board.data[(row + 1) * (Get_Width() + 2) + column + 1];
 }
 
 char Get(int row, int column)
 {
 	assert(board.data);
-	assert(row >= 0 && row < (int)Get_M() && column >= 0 && column < (int)Get_N());
-	return board.data[(row+1) * (board.N+2) + column+1];
+	assert(row >= 0 && row < (int)Get_Height() && column >= 0 && column < (int)Get_Width());
+	return board.data[(row+1) * (Get_Width() + 2) + column + 1];
 }
 
 void Set(int row, int column, char value)
 {
 	assert(board.next_data);
-	assert(row >= 0 && row < (int)Get_M() && column >= 0 && column < (int)Get_N());
-	board.next_data[(row+1) * (board.N+2) + column+1] = value;
+	assert(row >= 0 && row < (int)Get_Height() && column >= 0 && column < (int)Get_Width());
+	board.next_data[(row + 1) * (Get_Width() + 2) + column + 1] = value;
 }
 
-// used for setting the initial state
 void Start_Set(int row, int column, char value)
 {
 	assert(board.data);
-	assert(row >= 0 && row < (int)Get_M() && column >= 0 && column < (int)Get_N());
-	board.data[(row + 1) * (board.N + 2) + column + 1] = value;
+	assert(row >= 0 && row < (int)Get_Height() && column >= 0 && column < (int)Get_Width());
+	board.data[(row + 1) * (Get_Width() + 2) + column + 1] = value;
 }
 
-size_t Get_M()
+int Get_Height()
 {
-	return board.M;
+	return board.height;
 }
 
-size_t Get_N()
+int Get_Width()
 {
-	return board.N;
+	return board.width;
 }
 
 int GetGeneration()
@@ -216,9 +264,9 @@ int GetGeneration()
 int GetPopulation()
 {
 	int population = 0;
-	for (int i = 0; i < board.M; i++)
+	for (int i = 0; i < Get_Height(); i++)
 	{
-		for (int j = 0; j < board.N; j++)
+		for (int j = 0; j < Get_Width(); j++)
 		{
 			population += Get(i, j);
 		}

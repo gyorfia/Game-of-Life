@@ -2,18 +2,34 @@
 
 #define DEAD ' '
 #define ALIVE '@'
+#define MAX_WIDTH 80
+#define MAX_HEIGHT 50
 
+// DESCRIPTION:
 // Deallocates data, and next_data
 void FreeBoard();
 
 // DESCRIPTION:
-// Creates, initializes data and next_data (with dead cells / 0-s) to store the new board
-// Automatically deallocates the previous memory (if needed)
-// Draws the borders of the board, with a given offset, to leave space for instructions
+// Calls NewBoard with height=-1 and width=-1 to load the state from state.txt
 // INPUT/OUTPUT:
-// @M is the height, @N is the width of the board, 
+// @errorstring is printed at the error screen if an error occurs
+int NewBoardFromState(char* errorString);
+
+// DESCRIPTION:
+// Creates, initializes data and next_data (with dead cells / 0-s) to store the new board
+// then loads cells from state.txt if height=-1 and width=-1
+// Automatically deallocates the previous memory (if needed)
+// INPUT/OUTPUT:
+// @errorstring is printed at the error screen if an error occurs
 // and returns 0 if board initialization was successful
-int NewBoard(char* errorString);
+int NewBoard(char* errorString, int height, int width);
+
+// DESCRIPTION:
+// Writes a new state to state.txt
+// INPUT/OUTPUT:
+// @width is the width of the board, @height is the height of the board, @cellData is the board data (without padding)
+// Returns 0 if board initialization was successful
+int SetState(char* errorString);
 
 // DESCRIPTION:
 // Copies state.txt to a new or existing file named @filename
@@ -36,18 +52,16 @@ void UpdateBoard();
 char Get(int row, int column);
 
 // INPUT/OUTPUT:
-// Sets the character at [@row][@column] of the next board without the padding row and column
+// Sets the character at [@row][@column] of the board next_data without the padding row and column
 void Set(int row, int column, char value);
-
-void Start_Set(int row, int column, char value);
 
 // INPUT/OUTPUT:
 // Returns the height of the board
-size_t Get_M();
+int Get_Height();
 
 // INPUT/OUTPUT:
 // Returns the width of the board
-size_t Get_N();
+int Get_Width();
 
 // INPUT/OUTPUT:
 // Returns the generation number

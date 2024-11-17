@@ -27,6 +27,9 @@ struct InputThreadParams {
 // Input processing function
 DWORD WINAPI InputThread(LPVOID lpParam);
 
+// Function to draw the borders of the board
+void DrawBorders();
+
 // Draw the cells to the screen
 void DrawBoard();
 
@@ -52,7 +55,7 @@ int main()
 	// Hide the cursor
 	setcursortype(NOCURSOR);
 
-	while (TRUE)
+	while (true)
 	{
 		switch (state)
 		{
@@ -76,35 +79,69 @@ int main()
 			break;
 
 		case SETSTATE:
-			printf("Setting state...\n");
-			printf("Press ESC to return to Menu\n");
+		{
+			int boardWidth = 0, boardHeight = 0;
+			char instruction[256];
+			setcursortype(NORMALCURSOR);
+			sprintf_s(instruction, 256, "Enter board width=[5:%d] and height=[5:%d]: ", MAX_WIDTH, MAX_HEIGHT);
+
+			// Ask the user to enter board width and height
+			while (boardWidth < 5 || boardWidth >= 80 || boardHeight < 5 || boardHeight >= 80) {
+				printf("%s", instruction);
+				scanf_s("%d %d", &boardWidth, &boardHeight);
+				sprintf_s(instruction, 256, "Invalid width or height!\nEnter board width=[5:%d] and height=[5:%d]: ", MAX_WIDTH, MAX_HEIGHT);
+				clrscr();
+			}
+			if (NewBoard(errorString, boardHeight, boardWidth))
+			{
+				state = ERRORMESSAGE;
+				break;
+			}
+			DrawBorders();
+			DrawBoard();
+			int x = 0, y = 0;
 			while (key != VK_ESCAPE)
 			{
 				if (key != VK_EMPTY)
 				{
+					if (key == VK_UP && y > 0){y--;}
+					else if (key == VK_DOWN && y < Get_Height() - 1){y++;}
+					else if (key == VK_LEFT && x > 0){x--;}
+					else if (key == VK_RIGHT && x < Get_Width() - 1){x++;}
+					else if (key == VK_SPACE)
+					{
+						Set(y, x, Get(y, x) == 0 ? 1 : 0);
+					}
 					if (key != VK_ESCAPE)
 					{
+						gotoxy(x + 1, y + 1); // jump to the cell, after processing an input
+						DrawBoard();
 						key = VK_EMPTY; // reset the key
-					}
-					else
-					{
-						break;
 					}
 				}
 			}
 			key = VK_EMPTY;
 			state = MENU;
-			break;
-
-		case LIFE:
-		{
-			if (NewBoard(errorString))
+			setcursortype(NOCURSOR);
+			// Save the state to state.txt
+			if (SetState(errorString))
 			{
 				state = ERRORMESSAGE;
 				break;
 			}
-			const size_t M = Get_M();
-			const size_t N = Get_N();
+			break;
+		}
+
+		case LIFE:
+		{
+			if (NewBoardFromState(errorString))
+			{
+				state = ERRORMESSAGE;
+				break;
+			}
+			const size_t M = Get_Height();
+			const size_t N = Get_Width();
+			DrawBorders();
 			DrawBoard();
 			// print controls and properties of the board
 			gotoxy(N + 3, 1);
@@ -146,13 +183,14 @@ int main()
 
 		case LIFESTEP:
 		{
-			if (NewBoard(errorString))
+			if (NewBoardFromState(errorString))
 			{
 				state = ERRORMESSAGE;
 				break;
 			}
-			const size_t M = Get_M();
-			const size_t N = Get_N();
+			const size_t M = Get_Height();
+			const size_t N = Get_Width();
+			DrawBorders();
 			DrawBoard();
 			// print controls and properties of the board
 			gotoxy(N + 3, 1);
@@ -205,16 +243,9 @@ int main()
 			printf("Press ESC to return to Menu\n");
 			while (key != VK_ESCAPE)
 			{
-				if (key != VK_EMPTY)
+				if (key != VK_EMPTY && key != VK_ESCAPE)
 				{
-					if (key != VK_ESCAPE)
-					{
-						key = VK_EMPTY; // reset the key
-					}
-					else
-					{
-						break;
-					}
+					key = VK_EMPTY; // reset the key
 				}
 			}
 			key = VK_EMPTY;
@@ -226,16 +257,9 @@ int main()
 			printf("Press ESC to return to Menu\n");
 			while (key != VK_ESCAPE)
 			{
-				if (key != VK_EMPTY)
+				if (key != VK_EMPTY && key != VK_ESCAPE)
 				{
-					if (key != VK_ESCAPE)
-					{
-						key = VK_EMPTY; // reset the key
-					}
-					else
-					{
-						break;
-					}
+					key = VK_EMPTY; // reset the key
 				}
 			}
 			key = VK_EMPTY;
@@ -299,7 +323,6 @@ int main()
 		clrscr(); // clear the screen after changing states
 	}
 }
-
 DWORD WINAPI InputThread(LPVOID lpParam)
 {
 	struct InputThreadParams* params = (struct InputThreadParams*)lpParam;
@@ -319,12 +342,31 @@ DWORD WINAPI InputThread(LPVOID lpParam)
 	return 0;
 }
 
+void DrawBorders()
+{
+	const int height = Get_Height();
+	const int width = Get_Width();
+	// Draw borders (only needed when we initialize a new board)
+	for (int j = 0; j < width + 2; j++)
+		printf("#");
+	printf("\n");
+	for (int i = 0; i < height; i++)
+	{
+		printf("#");
+		for (int j = 0; j < width; j++)
+			printf(" ");
+		printf("#\n");
+	}
+	for (int j = 0; j < width + 2; j++)
+		printf("#");
+}
+
 void DrawBoard()
 {
-	for (int i = 0; i < Get_M(); i++)
+	for (int i = 0; i < Get_Height(); i++)
 	{
 		gotoxy(1, i + 1);
-		for (int j = 0; j < Get_N(); j++)
+		for (int j = 0; j < Get_Width(); j++)
 			printf("%c", (Get(i, j) == 0 ? DEAD : ALIVE));
 	}
 }
