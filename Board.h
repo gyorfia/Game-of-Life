@@ -2,8 +2,8 @@
 
 #define DEAD ' '
 #define ALIVE '@'
-#define MAX_WIDTH 80
-#define MAX_HEIGHT 50
+#define MAX_WIDTH 75
+#define MAX_HEIGHT 25
 
 // DESCRIPTION:
 // Deallocates data, and next_data
@@ -48,12 +48,18 @@ int LoadState(char* filename, char* errorString);
 void UpdateBoard();
 
 // INPUT/OUTPUT:
-// Returns the character at [@row][@column] of the board without the padding row and column
+// Returns the character at [@row][@column] of the board data without the padding row and column
 char Get(int row, int column);
 
 // INPUT/OUTPUT:
 // Sets the character at [@row][@column] of the board next_data without the padding row and column
 void Set(int row, int column, char value);
+
+// DESCRIPTION:
+// Used for setting the initial state
+// INPUT/OUTPUT:
+// Sets the character at [@row][@column] of the board data without the padding row and column
+void Start_Set(int row, int column, char value);
 
 // INPUT/OUTPUT:
 // Returns the height of the board

@@ -24,10 +24,12 @@ static struct Board
 char GetExt(int row, int column);
 
 // DESCRIPTION:
-// Used for setting the initial state
+// Copies the content of the source file to the destination file
 // INPUT/OUTPUT:
-// Sets the character at [@row][@column] of the board data without the padding row and column
-void Start_Set(int row, int column, char value);
+// @source is the path to the source file, @dest is the path to the destination file
+// @errorString is printed at the error screen if an error occurs
+// Returns 0 if the copy was successful
+int CopyFile(char* source, char* dest, char* errorString);
 
 //
 
@@ -161,15 +163,19 @@ int SetState(char* errorString)
 	return 0;
 }
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "Board.h"
+
 int SaveState(char* filename, char* errorString)
 {
-	return 0;
+	return CopyFile("SAVES//state.txt", filename, errorString);
 }
-
 
 int LoadState(char* filename, char* errorString)
 {
-	return 0;
+	return CopyFile(filename, "SAVES//state.txt", errorString);
 }
 
 void UpdateBoard()
@@ -223,6 +229,40 @@ char GetExt(int row, int column)
 	assert(board.data);
 	assert(row >= -1 && row <= (int)Get_Height() && column >= -1 && column <= (int)Get_Width());
 	return board.data[(row + 1) * (Get_Width() + 2) + column + 1];
+}
+
+int CopyFile(char* source, char* dest, char* errorString)
+{
+	// Open the source file
+	FILE* sourceFile = fopen(source, "r");
+	if (!sourceFile)
+	{
+		sprintf_s(errorString, 256, "Error opening %s!", source);
+		return 1;
+	}
+
+	// Open the destination file
+	FILE* destFile = fopen(dest, "w");
+	if (!destFile)
+	{
+		sprintf_s(errorString, 256, "Error opening %s!", dest);
+		fclose(sourceFile);
+		return 1;
+	}
+
+	// Copy content from source to destination
+	char buffer[256];
+	size_t bytes;
+	while ((bytes = fread(buffer, 1, sizeof(buffer), sourceFile)) > 0)
+	{
+		fwrite(buffer, 1, bytes, destFile);
+	}
+
+	// Close the files
+	fclose(sourceFile);
+	fclose(destFile);
+
+	return 0;
 }
 
 char Get(int row, int column)
