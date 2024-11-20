@@ -163,19 +163,14 @@ int SetState(char* errorString)
 	return 0;
 }
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "Board.h"
-
 int SaveState(char* filename, char* errorString)
 {
-	return CopyFile("SAVES//state.txt", filename, errorString);
+	return CopyFile("state.txt", filename, errorString);
 }
 
 int LoadState(char* filename, char* errorString)
 {
-	return CopyFile(filename, "SAVES//state.txt", errorString);
+	return CopyFile(filename, "state.txt", errorString);
 }
 
 void UpdateBoard()
