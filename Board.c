@@ -52,7 +52,7 @@ int NewBoard(char* errorString, int height, int width)
 	if (height == -1 && width == -1)
 	{
 		// Open state.txt
-		FILE* state = fopen("SAVES//state.txt", "r");
+		FILE* state = fopen("state.txt", "r");
 		if (!state)
 		{
 			sprintf_s(errorString, 256, "Error opening state.txt!");
@@ -129,7 +129,7 @@ int SetState(char* errorString)
 	int height = Get_Height();
 	int width = Get_Width();
 	// Rewrite the content of state.txt with the new state in the appropriate format
-	FILE* state = fopen("SAVES//state.txt", "w");
+	FILE* state = fopen("state.txt", "w");
 	if (!state)
 	{
 		sprintf_s(errorString, 256, "Error opening state.txt!");

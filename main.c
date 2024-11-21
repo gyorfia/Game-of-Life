@@ -6,6 +6,7 @@
 #include "Board.h"
 
 #define MAX_SAVE_FILES 256
+#define MAX_FILE_NAME 256
 
 enum MenuState 
 {
@@ -88,10 +89,9 @@ void DrawBoard();
 
 int main()
 {
-	SaveState("SAVES//TEST.txt", "Error message!");
 	// Initialize the board
 	enum MenuState state = MENU;
-	enum KeyState key = KEY_EMPTY;
+	volatile enum KeyState key = KEY_EMPTY; // prevent the compiler from optimizing the key away
 	char errorString[256] = "Error message!";
 
 	// Create a thread to handle the input
@@ -99,7 +99,7 @@ int main()
 	DWORD threadId;
 	DWORD exitCode;
     struct InputThreadParams threadParams = { &state, &key };
-	hThread = CreateThread(NULL, 0, InputThread, &threadParams, 0, &threadId);
+	hThread = CreateThread(NULL, 0, InputThread, (LPVOID)&threadParams, 0, &threadId);
 	if (hThread == NULL)
 	{
 		printf("Failed to create input handler thread.\n");
@@ -127,7 +127,7 @@ int main()
 			{
 				if (key != KEY_EMPTY)
 				{
-					state = key; // the keypress from (0-6) corresponds to the state
+					state = (enum MenuState)key; // the keypress from (0-6) corresponds to the state
 					key = KEY_EMPTY; // reset the key
 				}
 			}
@@ -357,15 +357,18 @@ int main()
 
 		case SAVE:
 		{
-			printf("Saving data...\n");
-			printf("Press ESC to return to Menu\n");
-			while (key != KEY_ESCAPE)
+			char fileName[MAX_FILE_NAME];
+			char fileNamePath[MAX_FILE_NAME + 11]; // 7 for the "SAVES//", 4 for the ".txt"
+			printf("Enter a file name: \n");
+			scanf_s("%s", fileName, 256);
+			sprintf_s(fileNamePath, 256+7, "SAVES//%s.txt", fileName);
+			if (SaveState(fileNamePath, errorString))
 			{
-				if (key != KEY_EMPTY && key != KEY_ESCAPE)
-				{
-					key = KEY_EMPTY; // reset the key
-				}
+				state = ERRORMESSAGE;
+				break;
 			}
+			clrscr();
+			printf("State saved successfully to %s!\n", fileName);
 			key = KEY_EMPTY;
 			state = MENU;
 			break;
