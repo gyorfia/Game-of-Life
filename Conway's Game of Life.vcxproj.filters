@@ -38,4 +38,9 @@
       <Filter>Resource Files</Filter>
     </Text>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="devdoc.md">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
 </Project>

@@ -220,7 +220,7 @@ int main()
 				printf("Population:      ");
 				gotoxy(N + 3, 4);
 				printf("Population: %d\n", GetPopulation());
-				Sleep(100);
+				Sleep(120);
 			}
 			key = KEY_EMPTY;
 			state = MENU;

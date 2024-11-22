@@ -7,8 +7,8 @@
 // Creates a static instance of the Board struct
 static struct Board
 {
-	size_t height; // # of logical rows
-	size_t width; // # of logical columns
+	int height; // # of logical rows
+	int width; // # of logical columns
 	int generation;
 	char* data;
 	char* next_data;
