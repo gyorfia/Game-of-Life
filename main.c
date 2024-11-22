@@ -10,7 +10,7 @@
 
 enum MenuState 
 {
-	MENU = '0', // start at '0' so we can use _getch() to get the state
+	MENU = 0,
 	SETSTATE,
 	LIFE,
 	LIFESTEP,
@@ -28,8 +28,8 @@ enum KeyState
 	KEY_DOWN = 's',
 	KEY_LEFT = 'a',
 	KEY_RIGHT = 'd',
-	KEY_SPACE = 32,
-	KEY_ESCAPE = 27
+	KEY_ENTER = 0x0D, // Enter key
+	KEY_ESCAPE = 0x1B // Escape key
 };
 
 // Used to pass pointers to variables to the input thread
@@ -46,44 +46,13 @@ DWORD WINAPI InputThread(LPVOID lpParam);
 // INPUT/OUTPUT:
 // @fileNames is an array of strings to store the file names, caller must deallocate the memory allocated for the strings
 // Returns the number of files found, which is the number of strings allocated in the @fileNames array
-int listTextFiles(char* fileNames[MAX_SAVE_FILES]) {
-	int nFiles = 0;
-	const char* folderPath = "SAVES"; // Folder name to search for text files
-	WIN32_FIND_DATAA findData;
-	HANDLE hFind;
-	char searchPath[MAX_PATH];
+int listTextFiles(char* fileNames[MAX_SAVE_FILES]);
 
-	// Create a search path
-	snprintf(searchPath, MAX_PATH, "%s\\*.txt", folderPath);
-
-	// Find the first file in the directory
-	hFind = FindFirstFileA(searchPath, &findData);
-	if (hFind == INVALID_HANDLE_VALUE) {
-		printf("No save files found in the folder: %s\n", folderPath);
-		return 0;
-	}
-
-	// Iterate through the files
-	do {
-		// "SAVES//" + filename + 1 for the null terminator
-		int strSize = 7 + (strlen(findData.cFileName)) + 1;
-		fileNames[nFiles] = (char*)malloc(strSize * sizeof(char));
-        if (fileNames[nFiles] != NULL) {
-			sprintf_s(fileNames[nFiles], strSize, "SAVES//%s", findData.cFileName);
-        } else {
-			return -1;
-        }
-		nFiles++;
-	} while (FindNextFileA(hFind, &findData) != 0 && nFiles < MAX_SAVE_FILES);
-
-	FindClose(hFind); // Close the search handle
-	return nFiles;
-}
-
-
+// DESCRIPTION:
 // Function to draw the borders of the board
 void DrawBorders();
 
+// DESCRIPTION:
 // Draw the cells to the screen
 void DrawBoard();
 
@@ -115,23 +84,33 @@ int main()
 		switch (state)
 		{
 		case MENU:
-			// Display the main menu
-			printf("Select menu option (1-6):\n");
-            printf("1. SET STATE\n");
-            printf("2. LIFE\n");
-            printf("3. LIFE STEP\n");
-            printf("4. LOAD\n");
-            printf("5. SAVE\n");
-            printf("6. QUIT\n");
-			while (state < '1' || state > '6')
+		{
+			int y = 1; // current selection	
+			key = 1; // set the key to a non-empty value, so the menu is displayed initially
+			while (true)
 			{
 				if (key != KEY_EMPTY)
 				{
-					state = (enum MenuState)key; // the keypress from (0-6) corresponds to the state
+					if (key == KEY_UP && y > 1) { y--; }
+					else if (key == KEY_DOWN && y < 6) { y++; }
+					else if (key == VK_RETURN)
+					{
+						state = (enum MenuState)y;
+						break;
+					}
+					clrscr();
+					printf("Select a menu option!\n");
+					printf("%sSET STATE\n", y == 1 ? "-> " : "");
+					printf("%sLIFE\n", y == 2 ? "-> " : "");
+					printf("%sLIFE STEP\n", y == 3 ? "-> " : "");
+					printf("%sLOAD\n", y == 4 ? "-> " : "");
+					printf("%sSAVE\n", y == 5 ? "-> " : "");
+					printf("%sQUIT\n", y == 6 ? "-> " : "");
 					key = KEY_EMPTY; // reset the key
 				}
 			}
 			break;
+		}
 
 		case SETSTATE:
 		{
@@ -161,7 +140,7 @@ int main()
 			gotoxy(N + 3, 2);
 			printf("\tESC   - Save state and return to Menu\n");
 			gotoxy(N + 3, 3);
-			printf("\tSPACE - Toggle cell\n");
+			printf("\tENTER - Toggle cell\n");
 			gotoxy(N + 3, 4);
 			printf("\tWASD  - Move selection\n");
 			int x = 0, y = 0; // y corresponds to the row, x corresponds to the column
@@ -175,7 +154,7 @@ int main()
 					else if (key == KEY_DOWN && y < Get_Height() - 1){y++;}
 					else if (key == KEY_LEFT && x > 0){x--;}
 					else if (key == KEY_RIGHT && x < Get_Width() - 1){x++;}
-					else if (key == KEY_SPACE)
+					else if (key == KEY_ENTER)
 					{
 						Start_Set(y, x, Get(y, x) == 0 ? 1 : 0);
 					}
@@ -265,18 +244,19 @@ int main()
 			gotoxy(N + 3, 2);
 			printf("\tESC   - Return to Menu\n");
 			gotoxy(N + 3, 3);
-			printf("\tSPACE - Next generation\n");
+			printf("\tENTER - Next generation\n");
 			gotoxy(N + 3, 4);
 			printf("Generation: %d\n", GetGeneration());
 			gotoxy(N + 3, 5);
 			printf("Population: %d\n", GetPopulation());
+			key = KEY_EMPTY; // clear the key to avoid stepping into the next generation immediately
 			while (key != KEY_ESCAPE)
 			{
 				while (TRUE)
 				{
 					if (key != KEY_EMPTY)
 					{
-						if (key != KEY_SPACE && key != KEY_ESCAPE)
+						if (key != KEY_ENTER && key != KEY_ESCAPE)
 						{
 							key = KEY_EMPTY; // reset the key
 						}
@@ -286,7 +266,7 @@ int main()
 						}
 					}
 				}
-				if (key == KEY_SPACE)
+				if (key == KEY_ENTER)
 				{
 					UpdateBoard();
 					DrawBoard();
@@ -318,16 +298,16 @@ int main()
 				{
 					if (key == KEY_UP && y > 0) { y--; }
 					else if (key == KEY_DOWN && y < nFiles - 1) { y++; }
-					if (key != KEY_ESCAPE)
+					if (key != KEY_ESCAPE) // Display the text files available for loading
 					{
 						clrscr();
-						printf("Select a save file (SPACE), or return to the menu (ESC):\n");
-						for (int i = 0; i < nFiles; i++)
+						printf("Select a save file, or press ESC to return to the menu:\n");
+						for (int i = 0; i < nFiles; i++) // Loop through the files
 						{
-							if (i == y) // when the selection is on the current file
+							if (i == y) // When the selection is on the current file
 							{
 								printf("-> %s\n", fileNames[i] + 7); // Avoid printing "SAVES//"
-								if (key == KEY_SPACE)
+								if (key == KEY_ENTER) // If the user presses enter, load the selected file
 								{
 									if (LoadState(fileNames[i], errorString))
 									{
@@ -336,7 +316,7 @@ int main()
 									}
 									clrscr();
 									printf("%s loaded successfully!", fileNames[i]+7); // Avoid printing "SAVES//"
-									Sleep(1500);
+									Sleep(1200);
 									selected = 1;
 									break;
 								}
@@ -359,7 +339,7 @@ int main()
 		{
 			char fileName[MAX_FILE_NAME];
 			char fileNamePath[MAX_FILE_NAME + 11]; // 7 for the "SAVES//", 4 for the ".txt"
-			printf("Enter a file name: \n");
+			printf("Enter a file name: ");
 			scanf_s("%s", fileName, 256);
 			sprintf_s(fileNamePath, 256+7, "SAVES//%s.txt", fileName);
 			if (SaveState(fileNamePath, errorString))
@@ -445,6 +425,42 @@ DWORD WINAPI InputThread(LPVOID lpParam)
 		}
 	}
 	return 0;
+}
+
+int listTextFiles(char* fileNames[MAX_SAVE_FILES])
+{
+	int nFiles = 0;
+	const char* folderPath = "SAVES"; // Folder name to search for text files
+	WIN32_FIND_DATAA findData;
+	HANDLE hFind;
+	char searchPath[MAX_PATH];
+
+	// Create a search path
+	snprintf(searchPath, MAX_PATH, "%s\\*.txt", folderPath);
+
+	// Find the first file in the directory
+	hFind = FindFirstFileA(searchPath, &findData);
+	if (hFind == INVALID_HANDLE_VALUE) {
+		printf("No save files found in the folder: %s\n", folderPath);
+		return 0;
+	}
+
+	// Iterate through the files
+	do {
+		// "SAVES//" + filename + 1 for the null terminator
+		int strSize = 7 + (strlen(findData.cFileName)) + 1;
+		fileNames[nFiles] = (char*)malloc(strSize * sizeof(char));
+		if (fileNames[nFiles] != NULL) {
+			sprintf_s(fileNames[nFiles], strSize, "SAVES//%s", findData.cFileName);
+		}
+		else {
+			return -1;
+		}
+		nFiles++;
+	} while (FindNextFileA(hFind, &findData) != 0 && nFiles < MAX_SAVE_FILES);
+
+	FindClose(hFind); // Close the search handle
+	return nFiles;
 }
 
 void DrawBorders()

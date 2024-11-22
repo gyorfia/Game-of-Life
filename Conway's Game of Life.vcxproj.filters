@@ -34,7 +34,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="SAVES\state.txt">
+    <Text Include="state.txt">
       <Filter>Resource Files</Filter>
     </Text>
   </ItemGroup>
