@@ -60,7 +60,7 @@ int NewBoard(char* errorString, int height, int width)
 		}
 
 		// Load board from the file
-		if (fscanf_s(state, "HEIGHT=%llu\nWIDTH=%llu\n", &board.height, &board.width) != 2)
+		if (fscanf_s(state, "HEIGHT=%d\nWIDTH=%d\n", &board.height, &board.width) != 2)
 		{
 			sprintf_s(errorString, 256, "Error reading height or width from state.txt!");
 			return 1;

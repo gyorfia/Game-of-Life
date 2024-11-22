@@ -273,7 +273,7 @@ int main()
 					gotoxy(N + 3, 4);
 					printf("Generation: %d\n", GetGeneration());
 					gotoxy(N + 3, 5);
-					// clear the population printed, because it can be smaller than the previous one
+					// Clear the population printed, because it can be smaller than the previous one
 					printf("Population:      ");
 					gotoxy(N + 3, 5);
 					printf("Population: %d\n", GetPopulation());
@@ -298,16 +298,16 @@ int main()
 				{
 					if (key == KEY_UP && y > 0) { y--; }
 					else if (key == KEY_DOWN && y < nFiles - 1) { y++; }
-					if (key != KEY_ESCAPE) // Display the text files available for loading
+					if (key != KEY_ESCAPE) // display the text files available for loading
 					{
 						clrscr();
 						printf("Select a save file, or press ESC to return to the menu:\n");
-						for (int i = 0; i < nFiles; i++) // Loop through the files
+						for (int i = 0; i < nFiles; i++) // loop through the files
 						{
-							if (i == y) // When the selection is on the current file
+							if (i == y) // when the selection is on the current file
 							{
 								printf("-> %s\n", fileNames[i] + 7); // Avoid printing "SAVES//"
-								if (key == KEY_ENTER) // If the user presses enter, load the selected file
+								if (key == KEY_ENTER) // if the user presses enter, load the selected file
 								{
 									if (LoadState(fileNames[i], errorString))
 									{
@@ -315,7 +315,7 @@ int main()
 										break;
 									}
 									clrscr();
-									printf("%s loaded successfully!", fileNames[i]+7); // Avoid printing "SAVES//"
+									printf("%s loaded successfully!", fileNames[i]+7); // avoid printing "SAVES//"
 									Sleep(1200);
 									selected = 1;
 									break;
@@ -323,7 +323,7 @@ int main()
 							}
 							else
 							{
-								printf("   %s\n", fileNames[i]+7); // Avoid printing "SAVES//"
+								printf("   %s\n", fileNames[i]+7); // avoid printing "SAVES//"
 							}
 						}
 						key = KEY_EMPTY; // reset the key
