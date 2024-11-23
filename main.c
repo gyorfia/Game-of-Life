@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "econio.h"
-#include "Board.h"
+#include "board.h"
 
 #define MAX_SAVE_FILES 256
 #define MAX_FILE_NAME 256
@@ -53,12 +53,12 @@ int listTextFiles(char* fileNames[MAX_SAVE_FILES]);
 void DrawBorders();
 
 // DESCRIPTION:
-// Draw the cells to the screen
+// Draws the cells to the screen
 void DrawBoard();
 
 int main()
 {
-	// Initialize the board
+	// Initialize variables
 	enum MenuState state = MENU;
 	volatile enum KeyState key = KEY_EMPTY; // prevent the compiler from optimizing the key away
 	char errorString[256] = "Error message!";
@@ -123,6 +123,8 @@ int main()
 			while (boardWidth < 5 || boardWidth > MAX_WIDTH || boardHeight < 5 || boardHeight > MAX_HEIGHT) {
 				printf("%s", instruction);
 				scanf_s("%d %d", &boardWidth, &boardHeight);
+				scanf_s("%*[^\n]"); // Discard everything until a newline
+				scanf_s("%*c");     // Discard the newline character
 				sprintf_s(instruction, 256, "Invalid width or height!\nEnter board width=[5:%d] and height=[5:%d]: ", MAX_WIDTH, MAX_HEIGHT);
 				clrscr();
 			}
@@ -146,6 +148,7 @@ int main()
 			int x = 0, y = 0; // y corresponds to the row, x corresponds to the column
 			gotoxy(1, 1); // jump to the top left cell initially
 			_putch('X');
+			key = KEY_EMPTY; // clear the key to avoid selecting a cell immediately
 			while (key != KEY_ESCAPE)
 			{
 				if (key != KEY_EMPTY)
@@ -340,7 +343,9 @@ int main()
 			char fileName[MAX_FILE_NAME];
 			char fileNamePath[MAX_FILE_NAME + 11]; // 7 for the "SAVES//", 4 for the ".txt"
 			printf("Enter a file name: ");
+			setcursortype(SOLIDCURSOR);
 			scanf_s("%s", fileName, 256);
+			setcursortype(NOCURSOR);
 			sprintf_s(fileNamePath, 256+7, "SAVES//%s.txt", fileName);
 			if (SaveState(fileNamePath, errorString))
 			{
@@ -349,6 +354,7 @@ int main()
 			}
 			clrscr();
 			printf("State saved successfully to %s!\n", fileName);
+			Sleep(1200);
 			key = KEY_EMPTY;
 			state = MENU;
 			break;

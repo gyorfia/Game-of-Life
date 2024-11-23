@@ -44,7 +44,8 @@ int SaveState(char* filename, char* errorString);
 // @filename must be a c type string
 int LoadState(char* filename, char* errorString);
 
-// Advance the simulation
+// DESCRIPTION:
+// Advances the simulation
 void UpdateBoard();
 
 // INPUT/OUTPUT:

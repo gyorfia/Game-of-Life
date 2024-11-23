@@ -129,12 +129,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Board.c" />
+    <ClCompile Include="board.c" />
     <ClCompile Include="econio.c" />
     <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Board.h" />
+    <ClInclude Include="board.h" />
     <ClInclude Include="econio.h" />
   </ItemGroup>
   <ItemGroup>

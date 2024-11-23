@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "Board.h"
+#include "board.h"
 #include <stdbool.h>
 #include <assert.h>
 
@@ -18,9 +18,9 @@ static struct Board
 
 // DESCRIPTION:
 // Used by the UpdateBoard function which needs to access the board with padding
+// Allows extended indexing from -1 to M, -1 to N
 // INPUT/OUTPUT:
 // Returns the character at [@row][@column] of the board with the padding row and column
-// Allows extended indexing from -1 to M, -1 to N
 char GetExt(int row, int column);
 
 // DESCRIPTION:
@@ -74,13 +74,6 @@ int NewBoard(char* errorString, int height, int width)
 			sprintf_s(errorString, 256, "Memory allocation failed!");
 			return 1;
 		}
-
-		//// Initialize the board with 0-s
-		//const size_t trueSize = (Get_Height() + 2) * (Get_Width() + 2);
-		//for (size_t i = 0; i < trueSize; i++)
-		//{
-		//	board.next_data[i] = board.data[i] = 0;
-		//}
 
 		// Load live cells from the file
 		char readChar;
