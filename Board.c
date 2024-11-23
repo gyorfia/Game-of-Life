@@ -1,3 +1,4 @@
+#define	_CRT_SECURE_NO_WARNINGS // suppress warnings about unsafe functions
 #include <stdio.h>
 #include <stdlib.h>
 #include "board.h"
@@ -55,14 +56,14 @@ int NewBoard(char* errorString, int height, int width)
 		FILE* state = fopen("state.txt", "r");
 		if (!state)
 		{
-			sprintf_s(errorString, 256, "Error opening state.txt!");
+			sprintf(errorString, "Error opening state.txt!");
 			return 1;
 		}
 
 		// Load board from the file
-		if (fscanf_s(state, "HEIGHT=%d\nWIDTH=%d\n", &board.height, &board.width) != 2)
+		if (fscanf(state, "HEIGHT=%d\nWIDTH=%d\n", &board.height, &board.width) != 2)
 		{
-			sprintf_s(errorString, 256, "Error reading height or width from state.txt!");
+			sprintf(errorString, "Error reading height or width from state.txt!");
 			return 1;
 		}
 
@@ -71,7 +72,7 @@ int NewBoard(char* errorString, int height, int width)
 		board.next_data = (char*)calloc((Get_Height() + 2) * (Get_Width() + 2), sizeof(char));
 		if (!board.data || !board.next_data)
 		{
-			sprintf_s(errorString, 256, "Memory allocation failed!");
+			sprintf(errorString, "Memory allocation failed!");
 			return 1;
 		}
 
@@ -80,7 +81,7 @@ int NewBoard(char* errorString, int height, int width)
 		int cellCounter = 0;
 		int numberOfCells = (int)(Get_Height() * Get_Width());
 		// the last argument of fscanf_s is the number of characters to read
-		while (fscanf_s(state, "%c", &readChar, 1) == 1 && cellCounter != numberOfCells)
+		while (fscanf(state, "%c", &readChar) == 1 && cellCounter != numberOfCells)
 		{
 			if (readChar == '0' || readChar == '1')
 			{
@@ -93,7 +94,7 @@ int NewBoard(char* errorString, int height, int width)
 		// Check whether we have read enough cells
 		if (cellCounter != numberOfCells)
 		{
-			sprintf_s(errorString, 256, "Only read %d cells out of the %d expected!", cellCounter, numberOfCells);
+			sprintf(errorString, "Only read %d cells out of the %d expected!", cellCounter, numberOfCells);
 			return 1;
 		}
 
@@ -108,7 +109,7 @@ int NewBoard(char* errorString, int height, int width)
 		board.next_data = (char*)calloc((Get_Height() + 2) * (Get_Width() + 2), sizeof(char));
 		if (!board.data || !board.next_data)
 		{
-			sprintf_s(errorString, 256, "Memory allocation failed!");
+			sprintf(errorString, "Memory allocation failed!");
 			return 1;
 		}
 	}
@@ -125,7 +126,7 @@ int SetState(char* errorString)
 	FILE* state = fopen("state.txt", "w");
 	if (!state)
 	{
-		sprintf_s(errorString, 256, "Error opening state.txt!");
+		sprintf(errorString, "Error opening state.txt!");
 		return 1;
 	}
     fprintf(state, "HEIGHT=%d\nWIDTH=%d\n", height, width);
@@ -225,7 +226,7 @@ int CopyFile(char* source, char* dest, char* errorString)
 	FILE* sourceFile = fopen(source, "r");
 	if (!sourceFile)
 	{
-		sprintf_s(errorString, 256, "Error opening %s!", source);
+		sprintf(errorString, "Error opening %s!", source);
 		return 1;
 	}
 
@@ -233,7 +234,7 @@ int CopyFile(char* source, char* dest, char* errorString)
 	FILE* destFile = fopen(dest, "w");
 	if (!destFile)
 	{
-		sprintf_s(errorString, 256, "Error opening %s!", dest);
+		sprintf(errorString, "Error opening %s!", dest);
 		fclose(sourceFile);
 		return 1;
 	}

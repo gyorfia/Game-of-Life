@@ -1,3 +1,4 @@
+#define	_CRT_SECURE_NO_WARNINGS // suppress warnings about unsafe functions
 #include <stdio.h>
 #include <Windows.h>
 #include <stdbool.h>
@@ -117,15 +118,15 @@ int main()
 			int boardWidth = 0, boardHeight = 0;
 			char instruction[256];
 			setcursortype(SOLIDCURSOR);
-			sprintf_s(instruction, 256, "Enter board width=[5:%d] and height=[5:%d]: ", MAX_WIDTH, MAX_HEIGHT);
+			sprintf(instruction, "Enter board width=[5:%d] and height=[5:%d]: ", MAX_WIDTH, MAX_HEIGHT);
 
 			// Ask the user to enter board width and height
 			while (boardWidth < 5 || boardWidth > MAX_WIDTH || boardHeight < 5 || boardHeight > MAX_HEIGHT) {
 				printf("%s", instruction);
-				scanf_s("%d %d", &boardWidth, &boardHeight);
-				scanf_s("%*[^\n]"); // Discard everything until a newline
-				scanf_s("%*c");     // Discard the newline character
-				sprintf_s(instruction, 256, "Invalid width or height!\nEnter board width=[5:%d] and height=[5:%d]: ", MAX_WIDTH, MAX_HEIGHT);
+				scanf("%d %d", &boardWidth, &boardHeight);
+				scanf("%*[^\n]"); // Discard everything until a newline
+				scanf("%*c");     // Discard the newline character
+				sprintf(instruction, "Invalid width or height!\nEnter board width=[5:%d] and height=[5:%d]: ", MAX_WIDTH, MAX_HEIGHT);
 				clrscr();
 			}
 			if (NewBoard(errorString, boardHeight, boardWidth))
@@ -344,9 +345,9 @@ int main()
 			char fileNamePath[MAX_FILE_NAME + 11]; // 7 for the "SAVES//", 4 for the ".txt"
 			printf("Enter a file name: ");
 			setcursortype(SOLIDCURSOR);
-			scanf_s("%s", fileName, 256);
+			scanf("%s", fileName);
 			setcursortype(NOCURSOR);
-			sprintf_s(fileNamePath, 256+7, "SAVES//%s.txt", fileName);
+			sprintf(fileNamePath, "SAVES//%s.txt", fileName);
 			if (SaveState(fileNamePath, errorString))
 			{
 				state = ERRORMESSAGE;
@@ -457,7 +458,7 @@ int listTextFiles(char* fileNames[MAX_SAVE_FILES])
 		int strSize = 7 + (strlen(findData.cFileName)) + 1;
 		fileNames[nFiles] = (char*)malloc(strSize * sizeof(char));
 		if (fileNames[nFiles] != NULL) {
-			sprintf_s(fileNames[nFiles], strSize, "SAVES//%s", findData.cFileName);
+			sprintf(fileNames[nFiles], "SAVES//%s", findData.cFileName);
 		}
 		else {
 			return -1;
